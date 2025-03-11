@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from typing import Final
 
 from aiohttp import ClientSession
 
@@ -10,20 +11,37 @@ from aiopurpleair.errors import PurpleAirError
 
 _LOGGER = logging.getLogger()
 
-API_KEY: str = "API_READ_KEY"
-READ_KEYS: list[str] | None = None  # ["SENSOR_READ_KEY", "SENSOR_READ_KEY"]
-INDEXES: list[int] | None = None  # [SENSOR_INDEX, SENSOR_INDEX]
-LATITUDE: float = 51.5285582
-LONGITUDE: float = -0.2416796
-DISTANCE: float = 10
-LIMIT: int | None = 10
-FIELDS: list[str] = [
-    "name",
-    "model",
-    "location_type",
-    "private",
+API_KEY: Final[str] = "API_READ_KEY"
+READ_KEYS: Final[list[str] | None] = None
+INDEXES: Final[list[int] | None] = None
+LATITUDE: Final[float] = 51.5285582
+LONGITUDE: Final[float] = -0.2416796
+DISTANCE: Final[float] = 10
+LIMIT: Final[int | None] = 10
+FIELDS: Final[list[str]] = [
+    "0.3_um_count",
+    "0.5_um_count",
+    "1.0_um_count",
+    "10.0_um_count",
+    "2.5_um_count",
+    "5.0_um_count",
+    "altitude",
+    "firmware_version",
+    "hardware",
+    "humidity",
     "latitude",
+    "location_type",
     "longitude",
+    "model",
+    "name",
+    "pm1.0",
+    "pm10.0",
+    "pm2.5",
+    "pressure",
+    "rssi",
+    "temperature",
+    "uptime",
+    "voc",
 ]
 
 
