@@ -42,13 +42,22 @@ warn_unused_configs = true
 warn_unused_ignores = true
 
 [tool.poetry]
-name = "aiopurpleair"
-version = "2025.08.1"
-description = "A Python 3, asyncio-based library to interact with the PurpleAir API"
+# Temporary fork distribution under a distinct PyPI name so the
+# homeassistant-purpleair custom integration can pin a working release while
+# upstream review is pending. Once upstream merges, this fork will be
+# yanked from PyPI and the integration will switch back to the canonical
+# `aiopurpleair` distribution.
+name = "aiopurpleair-ptr727"
+version = "2026.4.0"
+description = "Fork of aiopurpleair with extra exception subclasses and the GET /v1/organization endpoint."
 readme = "README.md"
-authors = ["Aaron Bach <bachya1208@gmail.com>"]
+authors = [
+    "Aaron Bach <bachya1208@gmail.com>",
+    "Pieter Viljoen <ptr727@users.noreply.github.com>",
+]
 license = "MIT"
-repository = "https://github.com/bachya/aiopurpleair"
+repository = "https://github.com/ptr727/bachya-aiopurpleair"
+packages = [{ include = "aiopurpleair" }]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
