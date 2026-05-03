@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -21,7 +21,7 @@ def test_get_keys_response(get_keys_response: dict[str, Any]) -> None:
     assert response.model_dump() == {
         "api_key_type": ApiKeyType.READ,
         "api_version": "V1.0.11-0.0.41",
-        "timestamp_utc": datetime(2022, 10, 27, 18, 25, 41),
+        "timestamp_utc": datetime(2022, 10, 27, 18, 25, 41, tzinfo=timezone.utc),
     }
 
 

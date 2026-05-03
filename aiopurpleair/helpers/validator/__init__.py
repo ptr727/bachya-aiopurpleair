@@ -10,6 +10,9 @@ def validate_timestamp(value: int) -> datetime:
         value: An integer (epoch datetime) to evaluate.
 
     Returns:
-        A parsed datetime.datetime object (UTC).
+        A parsed timezone-aware datetime (UTC).
     """
-    return datetime.fromtimestamp(value, tz=timezone.utc).replace(tzinfo=None)
+    # Returning a tz-aware datetime is required by downstream consumers like
+    # Home Assistant's SensorEntity (TIMESTAMP device class), which forces
+    # the entity state to "unavailable" when given a naive datetime.
+    return datetime.fromtimestamp(value, tz=timezone.utc)
