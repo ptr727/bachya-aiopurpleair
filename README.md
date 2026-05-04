@@ -18,6 +18,7 @@
   - [Checking an API Key](#checking-an-api-key)
   - [Getting Sensors](#getting-sensors)
   - [Getting a Single Sensor](#getting-a-single-sensor)
+  - [Getting a Private Sensor](#getting-a-private-sensor)
   - [Getting Nearby Sensors](#getting-nearby-sensors)
   - [Getting a Map URL](#getting-a-map-url)
   - [Getting Organization Information](#getting-organization-information)
@@ -130,6 +131,40 @@ asyncio.run(main())
 - `sensor_index` (required): The sensor index of the sensor to retrieve.
 - `fields` (optional): The sensor data fields to include.
 - `read_key` (optional): A read key for a private sensor.
+
+## Getting a Private Sensor
+
+Sensors registered as private require their per-sensor read key (visible to the
+sensor owner from the PurpleAir dashboard). Without it, the API returns
+`NotFoundError` even though the sensor exists. Pass the key as `read_key=` for a
+single sensor, or as a list to `read_keys=` when querying multiple sensors at
+once (the library joins the list with commas before sending):
+
+```python
+import asyncio
+
+from aiopurpleair import API
+
+
+async def main() -> None:
+    """Run."""
+    api = API("<API_KEY>")
+
+    # Single private sensor
+    response = await api.sensors.async_get_sensor(131075, read_key="<SENSOR_READ_KEY>")
+    # >>> response.sensor == SensorModel(sensor_index=131075, ...)
+
+    # Multiple sensors, mixing public and private — only the private ones need a key
+    response = await api.sensors.async_get_sensors(
+        ["name", "pm2.5"],
+        sensor_indices=[131075, 131079],
+        read_keys=["<SENSOR_READ_KEY_FOR_131075>"],
+    )
+    # >>> response.data == {131075: ..., 131079: ...}
+
+
+asyncio.run(main())
+```
 
 ## Getting Nearby Sensors
 
