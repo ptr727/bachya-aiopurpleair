@@ -53,6 +53,7 @@ To check whether an API key is valid and what properties it has:
 
 ```python
 import asyncio
+from datetime import datetime, timezone
 
 from aiopurpleair import API
 
@@ -73,6 +74,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
+from datetime import datetime, timezone
 
 from aiopurpleair import API
 
@@ -109,6 +111,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
+from datetime import datetime, timezone
 
 from aiopurpleair import API
 
@@ -232,6 +235,7 @@ sensor), including remaining API points and consumption rate:
 
 ```python
 import asyncio
+from datetime import datetime, timezone
 
 from aiopurpleair import API
 

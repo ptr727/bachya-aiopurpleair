@@ -151,10 +151,10 @@ async def test_api_error(
         ),
         ("MissingJsonPayloadError", MissingJsonPayloadError, InvalidRequestError, 415),
         ("InvalidJsonPayloadError", InvalidJsonPayloadError, InvalidRequestError, 400),
-        ("RequiresHttpsError", RequiresHttpsError, PurpleAirError, 403),
-        ("PaymentRequiredError", PaymentRequiredError, PurpleAirError, 402),
-        ("RateLimitExceededError", RateLimitExceededError, PurpleAirError, 429),
-        ("DataInitializingError", DataInitializingError, PurpleAirError, 503),
+        ("RequiresHttpsError", RequiresHttpsError, RequestError, 403),
+        ("PaymentRequiredError", PaymentRequiredError, RequestError, 402),
+        ("RateLimitExceededError", RateLimitExceededError, RequestError, 429),
+        ("DataInitializingError", DataInitializingError, RequestError, 503),
     ],
 )
 async def test_api_error_codes(
@@ -164,10 +164,14 @@ async def test_api_error_codes(
     base_type: type[PurpleAirError],
     status_code: int,
 ) -> None:
-    """Test that every documented PurpleAir error code raises the right subclass.
+    """Test the typed exception subclasses introduced for PurpleAir error codes.
 
-    Also asserts the documented base exception catches the subclass so existing
-    `except InvalidApiKeyError:` (etc.) handlers continue to work.
+    Each newly-mapped error code (HTTP 400/402/403/415/429/503 family) must
+    raise its specific subclass, transitively inherit from RequestError so that
+    existing `except RequestError:` catch-alls keep working, and chain the
+    aiohttp ClientError as `__cause__`. Pre-existing codes covered by
+    `test_api_error` (ApiKeyMissingError, ApiKeyInvalidError, NotFoundError)
+    are intentionally not duplicated here.
 
     Args:
         aresponses: An aresponses server.
@@ -195,6 +199,7 @@ async def test_api_error_codes(
         with pytest.raises(err_type) as captured:
             await api.async_request("get", "/bad_endpoint", GetKeysResponse)
         assert isinstance(captured.value, base_type)
+        assert isinstance(captured.value, RequestError)
         assert isinstance(captured.value.__cause__, aiohttp.ClientError)
 
     aresponses.assert_plan_strictly_followed()
@@ -216,8 +221,13 @@ def test_raise_error_isolates_cause_per_instance() -> None:
     assert first.value.__cause__ is first_cause
 
     with pytest.raises(InvalidDataReadKeyError) as second:
-        raise_error(resp, {**payload, "description": "second"}, None)
+        try:
+            raise RuntimeError("upstream context")
+        except RuntimeError:
+            raise_error(resp, {**payload, "description": "second"}, None)
     assert second.value.__cause__ is None
+    assert second.value.__suppress_context__ is False
+    assert isinstance(second.value.__context__, RuntimeError)
     assert first.value.__cause__ is first_cause
 
 

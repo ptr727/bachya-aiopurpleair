@@ -20,14 +20,14 @@ class NotFoundError(PurpleAirError):
     pass
 
 
-class InvalidRequestError(PurpleAirError):
-    """Define an invalid request."""
+class RequestError(PurpleAirError):
+    """Define a general HTTP request error."""
 
     pass
 
 
-class RequestError(PurpleAirError):
-    """Define a general HTTP request error."""
+class InvalidRequestError(RequestError):
+    """Define an invalid request."""
 
     pass
 
@@ -170,25 +170,25 @@ class InvalidJsonPayloadError(InvalidRequestError):
     pass
 
 
-class RequiresHttpsError(PurpleAirError):
+class RequiresHttpsError(RequestError):
     """Define a requires-HTTPS error (HTTP 403)."""
 
     pass
 
 
-class PaymentRequiredError(PurpleAirError):
+class PaymentRequiredError(RequestError):
     """Define an out-of-API-points error (HTTP 402)."""
 
     pass
 
 
-class RateLimitExceededError(PurpleAirError):
+class RateLimitExceededError(RequestError):
     """Define a rate-limit-exceeded error (HTTP 429)."""
 
     pass
 
 
-class DataInitializingError(PurpleAirError):
+class DataInitializingError(RequestError):
     """Define a data-initializing transient error (HTTP 503)."""
 
     pass
@@ -244,6 +244,7 @@ def raise_error(
         return
 
     exc_cls = ERROR_CODE_MAP.get(error_code, RequestError)
-    raise exc_cls(
-        f"Error while querying {resp.url}: {payload['description']}"
-    ) from raising_err
+    err_msg = f"Error while querying {resp.url}: {payload['description']}"
+    if raising_err is None:
+        raise exc_cls(err_msg)
+    raise exc_cls(err_msg) from raising_err
