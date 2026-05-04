@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -125,8 +125,10 @@ def test_get_sensors_request_errors(error_string: str, payload: dict[str, Any]) 
             },
             {
                 "api_version": "V1.0.11-0.0.41",
-                "timestamp_utc": datetime(2022, 11, 4, 3, 38, 17),
-                "data_timestamp_utc": datetime(2022, 11, 4, 3, 38, 11),
+                "timestamp_utc": datetime(2022, 11, 4, 3, 38, 17, tzinfo=timezone.utc),
+                "data_timestamp_utc": datetime(
+                    2022, 11, 4, 3, 38, 11, tzinfo=timezone.utc
+                ),
                 "max_age": 604800,
                 "firmware_default_version": "7.02",
                 "fields": ["sensor_index", "name", "icon"],

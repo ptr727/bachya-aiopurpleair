@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import aiohttp
 import pytest
@@ -135,8 +135,12 @@ async def test_get_sensor(  # pylint: disable=too-many-statements
         api = API(TEST_API_KEY, session=session)
         response = await api.sensors.async_get_sensor(12345)
         assert response.api_version == "V1.0.11-0.0.41"
-        assert response.timestamp_utc == datetime(2022, 11, 5, 16, 37, 3)
-        assert response.data_timestamp_utc == datetime(2022, 11, 5, 16, 36, 21)
+        assert response.timestamp_utc == datetime(
+            2022, 11, 5, 16, 37, 3, tzinfo=timezone.utc
+        )
+        assert response.data_timestamp_utc == datetime(
+            2022, 11, 5, 16, 36, 21, tzinfo=timezone.utc
+        )
         assert response.sensor.sensor_index == 131075
         assert response.sensor.altitude == 569
         assert response.sensor.analog_input == 0.03
@@ -147,15 +151,21 @@ async def test_get_sensor(  # pylint: disable=too-many-statements
         assert response.sensor.confidence == 100
         assert response.sensor.confidence_auto == 100
         assert response.sensor.confidence_manual == 100
-        assert response.sensor.date_created_utc == datetime(2021, 9, 29, 22, 46, 14)
+        assert response.sensor.date_created_utc == datetime(
+            2021, 9, 29, 22, 46, 14, tzinfo=timezone.utc
+        )
         assert response.sensor.firmware_version == "7.02"
         assert response.sensor.hardware == "2.0+BME280+PMSX003-B+PMSX003-A"
         assert response.sensor.humidity == 33
         assert response.sensor.humidity_a == 33
         assert response.sensor.icon == 0
         assert response.sensor.is_owner is False
-        assert response.sensor.last_modified_utc == datetime(2021, 10, 30, 22, 27, 9)
-        assert response.sensor.last_seen_utc == datetime(2022, 11, 5, 16, 36, 2)
+        assert response.sensor.last_modified_utc == datetime(
+            2021, 10, 30, 22, 27, 9, tzinfo=timezone.utc
+        )
+        assert response.sensor.last_seen_utc == datetime(
+            2022, 11, 5, 16, 36, 2, tzinfo=timezone.utc
+        )
         assert response.sensor.latitude == 33.51511
         assert response.sensor.led_brightness == 35
         assert response.sensor.location_type == LocationType.OUTSIDE
@@ -237,7 +247,9 @@ async def test_get_sensor(  # pylint: disable=too-many-statements
         assert response.sensor.stats.pm2_5_6hour == 1.2
         assert response.sensor.stats.pm2_5_24hour == 1.8
         assert response.sensor.stats.pm2_5_1week == 5.8
-        assert response.sensor.stats.timestamp_utc == datetime(2022, 11, 5, 16, 36, 2)
+        assert response.sensor.stats.timestamp_utc == datetime(
+            2022, 11, 5, 16, 36, 2, tzinfo=timezone.utc
+        )
 
         assert response.sensor.stats_a
         assert response.sensor.stats_a.pm2_5 == 0.0
@@ -247,7 +259,9 @@ async def test_get_sensor(  # pylint: disable=too-many-statements
         assert response.sensor.stats_a.pm2_5_6hour == 1.0
         assert response.sensor.stats_a.pm2_5_24hour == 1.4
         assert response.sensor.stats_a.pm2_5_1week == 4.8
-        assert response.sensor.stats_a.timestamp_utc == datetime(2022, 11, 5, 16, 36, 2)
+        assert response.sensor.stats_a.timestamp_utc == datetime(
+            2022, 11, 5, 16, 36, 2, tzinfo=timezone.utc
+        )
 
         assert response.sensor.stats_b
         assert response.sensor.stats_b.pm2_5 == 0.0
@@ -257,7 +271,9 @@ async def test_get_sensor(  # pylint: disable=too-many-statements
         assert response.sensor.stats_b.pm2_5_6hour == 1.5
         assert response.sensor.stats_b.pm2_5_24hour == 2.2
         assert response.sensor.stats_b.pm2_5_1week == 6.7
-        assert response.sensor.stats_b.timestamp_utc == datetime(2022, 11, 5, 16, 36, 2)
+        assert response.sensor.stats_b.timestamp_utc == datetime(
+            2022, 11, 5, 16, 36, 2, tzinfo=timezone.utc
+        )
 
     aresponses.assert_plan_strictly_followed()
 
@@ -300,8 +316,12 @@ async def test_get_sensors(aresponses: ResponsesMockServer) -> None:
             fields=["name"], location_type=LocationType.OUTSIDE
         )
         assert response.api_version == "V1.0.11-0.0.41"
-        assert response.timestamp_utc == datetime(2022, 11, 3, 19, 26, 29)
-        assert response.data_timestamp_utc == datetime(2022, 11, 3, 19, 25, 31)
+        assert response.timestamp_utc == datetime(
+            2022, 11, 3, 19, 26, 29, tzinfo=timezone.utc
+        )
+        assert response.data_timestamp_utc == datetime(
+            2022, 11, 3, 19, 25, 31, tzinfo=timezone.utc
+        )
         assert response.firmware_default_version == "7.02"
         assert response.max_age == 604800
         assert response.fields == ["sensor_index", "name", "latitude", "longitude"]

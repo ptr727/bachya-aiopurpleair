@@ -60,7 +60,7 @@ async def main() -> None:
     response = await api.async_check_api_key()
     # >>> response.api_key_type == ApiKeyType.READ
     # >>> response.api_version == "V1.0.11-0.0.41"
-    # >>> response.timestamp_utc == datetime(2022, 10, 27, 18, 25, 41)
+    # >>> response.timestamp_utc == datetime(2022, 10, 27, 18, 25, 41, tzinfo=timezone.utc)
 
 
 asyncio.run(main())
@@ -83,11 +83,11 @@ async def main() -> None:
     # >>>     131075: SensorModel(sensor_index=131075, name=Mariners Bluff),
     # >>>     131079: SensorModel(sensor_index=131079, name=BRSKBV-outside),
     # >>> }
-    # >>> response.data_timestamp_utc == datetime(2022, 11, 3, 19, 25, 31)
+    # >>> response.data_timestamp_utc == datetime(2022, 11, 3, 19, 25, 31, tzinfo=timezone.utc)
     # >>> response.fields == ["sensor_index", "name"]
     # >>> response.firmware_default_version == "7.02"
     # >>> response.max_age == 604800
-    # >>> response.timestamp_utc == datetime(2022, 11, 3, 19, 26, 29)
+    # >>> response.timestamp_utc == datetime(2022, 11, 3, 19, 26, 29, tzinfo=timezone.utc)
 
 
 asyncio.run(main())
@@ -115,9 +115,9 @@ async def main() -> None:
     api = API("<API_KEY>")
     response = await api.sensors.async_get_sensor(131075)
     # >>> response.api_version == "V1.0.11-0.0.41"
-    # >>> response.data_timestamp_utc == datetime(2022, 11, 5, 16, 36, 21)
+    # >>> response.data_timestamp_utc == datetime(2022, 11, 5, 16, 36, 21, tzinfo=timezone.utc)
     # >>> response.sensor == SensorModel(sensor_index=131075, ...),
-    # >>> response.timestamp_utc == datetime(2022, 11, 5, 16, 37, 3)
+    # >>> response.timestamp_utc == datetime(2022, 11, 5, 16, 37, 3, tzinfo=timezone.utc)
 
 
 asyncio.run(main())
@@ -208,7 +208,7 @@ async def main() -> None:
     # >>> response.organization_name == "Acme Air"
     # >>> response.remaining_points == 50000
     # >>> response.consumption_rate == 1500
-    # >>> response.timestamp_utc == datetime(2022, 10, 27, 20, 40, 45)
+    # >>> response.timestamp_utc == datetime(2022, 10, 27, 20, 40, 45, tzinfo=timezone.utc)
 
 
 asyncio.run(main())

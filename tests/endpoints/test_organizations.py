@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import aiohttp
 import pytest
@@ -36,7 +36,9 @@ async def test_get_organization(aresponses: ResponsesMockServer) -> None:
         response = await api.organizations.async_get_organization()
         assert isinstance(response, GetOrganizationResponse)
         assert response.api_version == "V1.0.11-0.0.41"
-        assert response.timestamp_utc == datetime(2022, 10, 27, 20, 40, 45)
+        assert response.timestamp_utc == datetime(
+            2022, 10, 27, 20, 40, 45, tzinfo=timezone.utc
+        )
         assert response.organization_id == "abc123def456"
         assert response.organization_name == "Test Org"
         assert response.remaining_points == 50000
