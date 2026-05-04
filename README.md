@@ -21,6 +21,7 @@
   - [Getting Nearby Sensors](#getting-nearby-sensors)
   - [Getting a Map URL](#getting-a-map-url)
   - [Getting Organization Information](#getting-organization-information)
+  - [Error Handling](#error-handling)
   - [Connection Pooling](#connection-pooling)
 - [Contributing](#contributing)
 
@@ -212,6 +213,49 @@ async def main() -> None:
 
 asyncio.run(main())
 ```
+
+## Error Handling
+
+Every documented PurpleAir API error code is mapped to a typed exception, so
+callers can react to specific failures without pattern-matching on the API's
+`error` string. The existing public bases (`PurpleAirError`, `RequestError`,
+`InvalidApiKeyError`, `InvalidRequestError`, `NotFoundError`) still catch the
+new subclasses by inheritance, so existing handlers keep working unchanged.
+
+```python
+import asyncio
+
+from aiopurpleair import API
+from aiopurpleair.errors import (
+    InvalidApiKeyError,
+    PaymentRequiredError,
+    RateLimitExceededError,
+)
+
+
+async def main() -> None:
+    """Run."""
+    api = API("<API_KEY>")
+    try:
+        await api.organizations.async_get_organization()
+    except PaymentRequiredError:
+        # The account is out of API points (HTTP 402).
+        ...
+    except RateLimitExceededError:
+        # The API key is being throttled (HTTP 429).
+        ...
+    except InvalidApiKeyError:
+        # Catches the API-key-related subclasses: ApiKeyTypeMismatchError,
+        # ApiKeyRestrictedError, ApiDisabledError, ProjectArchivedError,
+        # InvalidTokenError, plus the existing ApiKeyMissing/Invalid mappings.
+        ...
+
+
+asyncio.run(main())
+```
+
+The full exception hierarchy lives in
+[`aiopurpleair/errors.py`](aiopurpleair/errors.py).
 
 ## Connection Pooling
 

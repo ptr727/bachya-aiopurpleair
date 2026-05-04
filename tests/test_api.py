@@ -3,14 +3,48 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from unittest.mock import MagicMock
 
 import aiohttp
 import pytest
 from aresponses import ResponsesMockServer
 
 from aiopurpleair import API
-from aiopurpleair.errors import InvalidApiKeyError, NotFoundError, RequestError
+from aiopurpleair.errors import (
+    ApiDisabledError,
+    ApiKeyRestrictedError,
+    ApiKeyTypeMismatchError,
+    DataInitializingError,
+    InvalidApiKeyError,
+    InvalidAverageError,
+    InvalidBoundingBoxError,
+    InvalidCfError,
+    InvalidDataReadKeyError,
+    InvalidFieldValueError,
+    InvalidJsonPayloadError,
+    InvalidLocationTypeError,
+    InvalidMaxAgeError,
+    InvalidModifiedSinceError,
+    InvalidParameterValueError,
+    InvalidRequestError,
+    InvalidRequestUrlError,
+    InvalidShowValueError,
+    InvalidTimestampError,
+    InvalidTimestampSpanError,
+    InvalidTokenError,
+    MissingFieldsParameterError,
+    MissingJsonPayloadError,
+    MissingRequiredParameterError,
+    NotFoundError,
+    PaymentRequiredError,
+    ProjectArchivedError,
+    PurpleAirError,
+    RateLimitExceededError,
+    RequestError,
+    RequiresHttpsError,
+    raise_error,
+)
 from aiopurpleair.models.keys import ApiKeyType, GetKeysResponse
 from tests.common import TEST_API_KEY, load_fixture
 
@@ -57,6 +91,137 @@ async def test_api_error(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error_code,err_type,base_type,status_code",
+    [
+        ("ApiKeyTypeMismatchError", ApiKeyTypeMismatchError, InvalidApiKeyError, 403),
+        ("ApiKeyRestrictedError", ApiKeyRestrictedError, InvalidApiKeyError, 403),
+        ("ApiDisabledError", ApiDisabledError, InvalidApiKeyError, 403),
+        ("ProjectArchivedError", ProjectArchivedError, InvalidApiKeyError, 403),
+        ("InvalidTokenError", InvalidTokenError, InvalidApiKeyError, 403),
+        ("InvalidDataReadKeyError", InvalidDataReadKeyError, InvalidRequestError, 400),
+        ("InvalidFieldValueError", InvalidFieldValueError, InvalidRequestError, 400),
+        (
+            "InvalidParameterValueError",
+            InvalidParameterValueError,
+            InvalidRequestError,
+            400,
+        ),
+        (
+            "MissingRequiredParameterError",
+            MissingRequiredParameterError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidRequestUrlError", InvalidRequestUrlError, InvalidRequestError, 400),
+        ("InvalidTimestampError", InvalidTimestampError, InvalidRequestError, 400),
+        (
+            "InvalidTimestampSpanError",
+            InvalidTimestampSpanError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidAverageError", InvalidAverageError, InvalidRequestError, 400),
+        (
+            "MissingFieldsParameterError",
+            MissingFieldsParameterError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidShowValueError", InvalidShowValueError, InvalidRequestError, 400),
+        (
+            "InvalidLocationTypeError",
+            InvalidLocationTypeError,
+            InvalidRequestError,
+            400,
+        ),
+        (
+            "InvalidModifiedSinceError",
+            InvalidModifiedSinceError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidMaxAgeError", InvalidMaxAgeError, InvalidRequestError, 400),
+        ("InvalidCfError", InvalidCfError, InvalidRequestError, 400),
+        (
+            "InvalidBoundingBoxError",
+            InvalidBoundingBoxError,
+            InvalidRequestError,
+            400,
+        ),
+        ("MissingJsonPayloadError", MissingJsonPayloadError, InvalidRequestError, 415),
+        ("InvalidJsonPayloadError", InvalidJsonPayloadError, InvalidRequestError, 400),
+        ("RequiresHttpsError", RequiresHttpsError, PurpleAirError, 403),
+        ("PaymentRequiredError", PaymentRequiredError, PurpleAirError, 402),
+        ("RateLimitExceededError", RateLimitExceededError, PurpleAirError, 429),
+        ("DataInitializingError", DataInitializingError, PurpleAirError, 503),
+    ],
+)
+async def test_api_error_codes(
+    aresponses: ResponsesMockServer,
+    error_code: str,
+    err_type: type[PurpleAirError],
+    base_type: type[PurpleAirError],
+    status_code: int,
+) -> None:
+    """Test that every documented PurpleAir error code raises the right subclass.
+
+    Also asserts the documented base exception catches the subclass so existing
+    `except InvalidApiKeyError:` (etc.) handlers continue to work.
+
+    Args:
+        aresponses: An aresponses server.
+        error_code: The PurpleAir API error-code string.
+        err_type: The aiopurpleair exception subclass that should be raised.
+        base_type: The documented base class that must also catch the subclass.
+        status_code: The HTTP status code the API returns for this error.
+    """
+    payload = {
+        "api_version": "V1.0.11-0.0.41",
+        "time_stamp": 1666903245,
+        "error": error_code,
+        "description": f"Synthesised description for {error_code}.",
+    }
+
+    aresponses.add(
+        "api.purpleair.com",
+        "/v1/bad_endpoint",
+        "get",
+        response=aiohttp.web_response.json_response(payload, status=status_code),
+    )
+
+    async with aiohttp.ClientSession() as session:
+        api = API(TEST_API_KEY, session=session)
+        with pytest.raises(err_type) as captured:
+            await api.async_request("get", "/bad_endpoint", GetKeysResponse)
+        assert isinstance(captured.value, base_type)
+        assert isinstance(captured.value.__cause__, aiohttp.ClientError)
+
+    aresponses.assert_plan_strictly_followed()
+
+
+def test_raise_error_isolates_cause_per_instance() -> None:
+    """Regression: __cause__ must live on the instance, not the class.
+
+    Previously raise_error set __cause__ as a class attribute, so the second
+    raise of the same error type would inherit a stale __cause__ from the
+    first.
+    """
+    resp = MagicMock(url="https://api.purpleair.com/v1/sensors/1")
+    payload = {"error": "InvalidDataReadKeyError", "description": "first"}
+    first_cause = aiohttp.ClientError("network blip")
+
+    with pytest.raises(InvalidDataReadKeyError) as first:
+        raise_error(resp, payload, first_cause)
+    assert first.value.__cause__ is first_cause
+
+    with pytest.raises(InvalidDataReadKeyError) as second:
+        raise_error(resp, {**payload, "description": "second"}, None)
+    assert second.value.__cause__ is None
+    assert first.value.__cause__ is first_cause
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("use_session", [True, False])
 async def test_check_api_key(
     aresponses: ResponsesMockServer, use_session: bool
@@ -86,7 +251,9 @@ async def test_check_api_key(
     assert isinstance(response, GetKeysResponse)
     assert response.api_key_type == ApiKeyType.READ
     assert response.api_version == "V1.0.11-0.0.41"
-    assert response.timestamp_utc == datetime(2022, 10, 27, 18, 25, 41)
+    assert response.timestamp_utc == datetime(
+        2022, 10, 27, 18, 25, 41, tzinfo=timezone.utc
+    )
 
     aresponses.assert_plan_strictly_followed()
 
