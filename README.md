@@ -20,6 +20,7 @@
   - [Getting a Single Sensor](#getting-a-single-sensor)
   - [Getting Nearby Sensors](#getting-nearby-sensors)
   - [Getting a Map URL](#getting-a-map-url)
+  - [Getting Organization Information](#getting-organization-information)
   - [Connection Pooling](#connection-pooling)
 - [Contributing](#contributing)
 
@@ -181,6 +182,32 @@ async def main() -> None:
     api = API("<API_KEY>")
     map_url = api.get_map_url(12345)
     # >>> https://map.purpleair.com/1/mAQI/a10/p604800/cC0?select=12345
+
+
+asyncio.run(main())
+```
+
+## Getting Organization Information
+
+To retrieve account-level information for the API key (independent of any single
+sensor), including remaining API points and consumption rate:
+
+```python
+import asyncio
+
+from aiopurpleair import API
+
+
+async def main() -> None:
+    """Run."""
+    api = API("<API_KEY>")
+    response = await api.organizations.async_get_organization()
+    # >>> response.api_version == "V1.0.11-0.0.41"
+    # >>> response.organization_id == "abc123def456"
+    # >>> response.organization_name == "Acme Air"
+    # >>> response.remaining_points == 50000
+    # >>> response.consumption_rate == 1500
+    # >>> response.timestamp_utc == datetime(2022, 10, 27, 20, 40, 45)
 
 
 asyncio.run(main())

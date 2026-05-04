@@ -9,6 +9,7 @@ from aiohttp.client_exceptions import ClientError
 from pydantic import ValidationError
 
 from aiopurpleair.const import LOGGER
+from aiopurpleair.endpoints.organizations import OrganizationsEndpoints
 from aiopurpleair.endpoints.sensors import SensorsEndpoints
 from aiopurpleair.errors import RequestError, raise_error
 from aiopurpleair.helpers.model import PurpleAirBaseModel, PurpleAirBaseModelT
@@ -39,6 +40,7 @@ class API:
         self._api_key = api_key
         self._session = session
 
+        self.organizations = OrganizationsEndpoints(self.async_request)
         self.sensors = SensorsEndpoints(self.async_request)
 
     async def async_check_api_key(self) -> GetKeysResponse:
