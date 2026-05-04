@@ -164,10 +164,14 @@ async def test_api_error_codes(
     base_type: type[PurpleAirError],
     status_code: int,
 ) -> None:
-    """Test that every documented PurpleAir error code raises the right subclass.
+    """Test the typed exception subclasses introduced for PurpleAir error codes.
 
-    Also asserts the documented base exception catches the subclass so existing
-    `except InvalidApiKeyError:` (etc.) handlers continue to work.
+    Each newly-mapped error code (HTTP 400/402/403/415/429/503 family) must
+    raise its specific subclass, transitively inherit from RequestError so that
+    existing `except RequestError:` catch-alls keep working, and chain the
+    aiohttp ClientError as `__cause__`. Pre-existing codes covered by
+    `test_api_error` (ApiKeyMissingError, ApiKeyInvalidError, NotFoundError)
+    are intentionally not duplicated here.
 
     Args:
         aresponses: An aresponses server.
@@ -225,6 +229,23 @@ def test_raise_error_isolates_cause_per_instance() -> None:
     assert second.value.__suppress_context__ is False
     assert isinstance(second.value.__context__, RuntimeError)
     assert first.value.__cause__ is first_cause
+
+
+def test_raise_error_surfaces_http_error_without_payload() -> None:
+    """An HTTP failure with no PurpleAir `error` key must not be swallowed.
+
+    Without this, a non-PurpleAir HTTP error (proxy 502, HTML body, JSON in
+    the wrong shape, etc.) reaches the caller as a confusing pydantic
+    ValidationError instead of the original transport failure.
+    """
+    resp = MagicMock(url="https://api.purpleair.com/v1/sensors/1")
+    cause = aiohttp.ClientError("502 Bad Gateway")
+
+    with pytest.raises(RequestError) as captured:
+        raise_error(resp, {"unexpected": "shape"}, cause)
+    assert captured.value.__cause__ is cause
+
+    raise_error(resp, {"unexpected": "shape"}, None)
 
 
 @pytest.mark.asyncio

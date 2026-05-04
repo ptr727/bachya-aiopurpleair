@@ -239,9 +239,14 @@ def raise_error(
 
     Raises:
         exc: Raised upon an HTTP error.
+        RequestError: Raised when an HTTP error has no PurpleAir error payload.
     """
     if (error_code := payload.get("error")) is None:
-        return
+        if raising_err is None:
+            return
+        raise RequestError(
+            f"HTTP error querying {resp.url}: {raising_err}"
+        ) from raising_err
 
     exc_cls = ERROR_CODE_MAP.get(error_code, RequestError)
     err_msg = f"Error while querying {resp.url}: {payload['description']}"
