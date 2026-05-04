@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from aiopurpleair.endpoints import APIEndpointsBase
 from aiopurpleair.models.organizations import GetOrganizationResponse
 
 
-class OrganizationsEndpoints(APIEndpointsBase):
+class OrganizationsEndpoints(APIEndpointsBase):  # pylint: disable=too-few-public-methods
     """Define the organizations API manager object."""
 
     async def async_get_organization(self) -> GetOrganizationResponse:
@@ -15,9 +17,11 @@ class OrganizationsEndpoints(APIEndpointsBase):
         Returns:
             An API response payload in the form of a Pydantic model.
         """
-        response: GetOrganizationResponse = await self._async_request(
-            "get",
-            "/organization",
+        return cast(
             GetOrganizationResponse,
+            await self._async_request(
+                "get",
+                "/organization",
+                GetOrganizationResponse,
+            ),
         )
-        return response

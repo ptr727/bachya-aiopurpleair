@@ -251,7 +251,9 @@ async def test_check_api_key(
     assert isinstance(response, GetKeysResponse)
     assert response.api_key_type == ApiKeyType.READ
     assert response.api_version == "V1.0.11-0.0.41"
-    assert response.timestamp_utc == datetime(2022, 10, 27, 18, 25, 41, tzinfo=timezone.utc)
+    assert response.timestamp_utc == datetime(
+        2022, 10, 27, 18, 25, 41, tzinfo=timezone.utc
+    )
 
     aresponses.assert_plan_strictly_followed()
 
