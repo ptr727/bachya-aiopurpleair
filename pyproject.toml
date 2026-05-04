@@ -48,7 +48,7 @@ warn_unused_ignores = true
 # yanked from PyPI and the integration will switch back to the canonical
 # `aiopurpleair` distribution.
 name = "aiopurpleair-ptr727"
-version = "2026.6.0"
+version = "2026.7.0"
 description = "Fork of aiopurpleair with extra exception subclasses and the GET /v1/organization endpoint."
 readme = "README.md"
 authors = [
