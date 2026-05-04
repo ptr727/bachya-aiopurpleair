@@ -116,6 +116,48 @@ class InvalidAverageError(InvalidRequestError):
     pass
 
 
+class MissingFieldsParameterError(InvalidRequestError):
+    """Define a missing-fields-parameter error (HTTP 400)."""
+
+    pass
+
+
+class InvalidShowValueError(InvalidRequestError):
+    """Define an invalid-show-value error (HTTP 400)."""
+
+    pass
+
+
+class InvalidLocationTypeError(InvalidRequestError):
+    """Define an invalid-location-type error (HTTP 400)."""
+
+    pass
+
+
+class InvalidModifiedSinceError(InvalidRequestError):
+    """Define an invalid-modified-since error (HTTP 400)."""
+
+    pass
+
+
+class InvalidMaxAgeError(InvalidRequestError):
+    """Define an invalid-max-age error (HTTP 400)."""
+
+    pass
+
+
+class InvalidCfError(InvalidRequestError):
+    """Define an invalid-cf error (HTTP 400)."""
+
+    pass
+
+
+class InvalidBoundingBoxError(InvalidRequestError):
+    """Define an invalid-bounding-box error (HTTP 400)."""
+
+    pass
+
+
 class MissingJsonPayloadError(InvalidRequestError):
     """Define a missing-JSON-payload error (HTTP 415)."""
 
@@ -168,6 +210,13 @@ ERROR_CODE_MAP = {
     "InvalidTimestampError": InvalidTimestampError,
     "InvalidTimestampSpanError": InvalidTimestampSpanError,
     "InvalidAverageError": InvalidAverageError,
+    "MissingFieldsParameterError": MissingFieldsParameterError,
+    "InvalidShowValueError": InvalidShowValueError,
+    "InvalidLocationTypeError": InvalidLocationTypeError,
+    "InvalidModifiedSinceError": InvalidModifiedSinceError,
+    "InvalidMaxAgeError": InvalidMaxAgeError,
+    "InvalidCfError": InvalidCfError,
+    "InvalidBoundingBoxError": InvalidBoundingBoxError,
     "MissingJsonPayloadError": MissingJsonPayloadError,
     "InvalidJsonPayloadError": InvalidJsonPayloadError,
     "RequiresHttpsError": RequiresHttpsError,
@@ -194,6 +243,7 @@ def raise_error(
     if (error_code := payload.get("error")) is None:
         return
 
-    exc = ERROR_CODE_MAP.get(error_code, RequestError)
-    exc.__cause__ = raising_err
-    raise exc(f"Error while querying {resp.url}: {payload['description']}")
+    exc_cls = ERROR_CODE_MAP.get(error_code, RequestError)
+    raise exc_cls(
+        f"Error while querying {resp.url}: {payload['description']}"
+    ) from raising_err

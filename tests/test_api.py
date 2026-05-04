@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from unittest.mock import MagicMock
 
 import aiohttp
 import pytest
@@ -17,15 +18,22 @@ from aiopurpleair.errors import (
     DataInitializingError,
     InvalidApiKeyError,
     InvalidAverageError,
+    InvalidBoundingBoxError,
+    InvalidCfError,
     InvalidDataReadKeyError,
     InvalidFieldValueError,
     InvalidJsonPayloadError,
+    InvalidLocationTypeError,
+    InvalidMaxAgeError,
+    InvalidModifiedSinceError,
     InvalidParameterValueError,
     InvalidRequestError,
     InvalidRequestUrlError,
+    InvalidShowValueError,
     InvalidTimestampError,
     InvalidTimestampSpanError,
     InvalidTokenError,
+    MissingFieldsParameterError,
     MissingJsonPayloadError,
     MissingRequiredParameterError,
     NotFoundError,
@@ -35,6 +43,7 @@ from aiopurpleair.errors import (
     RateLimitExceededError,
     RequestError,
     RequiresHttpsError,
+    raise_error,
 )
 from aiopurpleair.models.keys import ApiKeyType, GetKeysResponse
 from tests.common import TEST_API_KEY, load_fixture
@@ -113,6 +122,33 @@ async def test_api_error(
             400,
         ),
         ("InvalidAverageError", InvalidAverageError, InvalidRequestError, 400),
+        (
+            "MissingFieldsParameterError",
+            MissingFieldsParameterError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidShowValueError", InvalidShowValueError, InvalidRequestError, 400),
+        (
+            "InvalidLocationTypeError",
+            InvalidLocationTypeError,
+            InvalidRequestError,
+            400,
+        ),
+        (
+            "InvalidModifiedSinceError",
+            InvalidModifiedSinceError,
+            InvalidRequestError,
+            400,
+        ),
+        ("InvalidMaxAgeError", InvalidMaxAgeError, InvalidRequestError, 400),
+        ("InvalidCfError", InvalidCfError, InvalidRequestError, 400),
+        (
+            "InvalidBoundingBoxError",
+            InvalidBoundingBoxError,
+            InvalidRequestError,
+            400,
+        ),
         ("MissingJsonPayloadError", MissingJsonPayloadError, InvalidRequestError, 415),
         ("InvalidJsonPayloadError", InvalidJsonPayloadError, InvalidRequestError, 400),
         ("RequiresHttpsError", RequiresHttpsError, PurpleAirError, 403),
@@ -159,8 +195,30 @@ async def test_api_error_codes(
         with pytest.raises(err_type) as captured:
             await api.async_request("get", "/bad_endpoint", GetKeysResponse)
         assert isinstance(captured.value, base_type)
+        assert isinstance(captured.value.__cause__, aiohttp.ClientError)
 
     aresponses.assert_plan_strictly_followed()
+
+
+def test_raise_error_isolates_cause_per_instance() -> None:
+    """Regression: __cause__ must live on the instance, not the class.
+
+    Previously raise_error set __cause__ as a class attribute, so the second
+    raise of the same error type would inherit a stale __cause__ from the
+    first.
+    """
+    resp = MagicMock(url="https://api.purpleair.com/v1/sensors/1")
+    payload = {"error": "InvalidDataReadKeyError", "description": "first"}
+    first_cause = aiohttp.ClientError("network blip")
+
+    with pytest.raises(InvalidDataReadKeyError) as first:
+        raise_error(resp, payload, first_cause)
+    assert first.value.__cause__ is first_cause
+
+    with pytest.raises(InvalidDataReadKeyError) as second:
+        raise_error(resp, {**payload, "description": "second"}, None)
+    assert second.value.__cause__ is None
+    assert first.value.__cause__ is first_cause
 
 
 @pytest.mark.asyncio
