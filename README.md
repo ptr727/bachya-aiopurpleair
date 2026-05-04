@@ -277,7 +277,7 @@ from aiopurpleair import API
 async def main() -> None:
     """Run."""
     async with ClientSession() as session:
-        api = await API("<API KEY>")
+        api = API("<API KEY>", session=session)
 
         # Get to work...
 
