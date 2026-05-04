@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Iterable
-from typing import Any
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -56,9 +56,12 @@ class APIEndpointsBase:  # pylint: disable=too-few-public-methods
         except ValidationError as err:
             raise InvalidRequestError(err) from err
 
-        return await self._async_request(
-            "get",
-            endpoint,
-            response_model,
-            params=request.model_dump(exclude_none=True),
+        return cast(
+            PurpleAirBaseModelT,
+            await self._async_request(
+                "get",
+                endpoint,
+                response_model,
+                params=request.model_dump(exclude_none=True),
+            ),
         )
