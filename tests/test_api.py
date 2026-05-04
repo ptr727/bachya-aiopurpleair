@@ -231,6 +231,23 @@ def test_raise_error_isolates_cause_per_instance() -> None:
     assert first.value.__cause__ is first_cause
 
 
+def test_raise_error_surfaces_http_error_without_payload() -> None:
+    """An HTTP failure with no PurpleAir `error` key must not be swallowed.
+
+    Without this, a non-PurpleAir HTTP error (proxy 502, HTML body, JSON in
+    the wrong shape, etc.) reaches the caller as a confusing pydantic
+    ValidationError instead of the original transport failure.
+    """
+    resp = MagicMock(url="https://api.purpleair.com/v1/sensors/1")
+    cause = aiohttp.ClientError("502 Bad Gateway")
+
+    with pytest.raises(RequestError) as captured:
+        raise_error(resp, {"unexpected": "shape"}, cause)
+    assert captured.value.__cause__ is cause
+
+    raise_error(resp, {"unexpected": "shape"}, None)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("use_session", [True, False])
 async def test_check_api_key(
